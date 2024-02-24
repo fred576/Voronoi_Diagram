@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <fstream>
 
 using namespace std;
 
@@ -36,17 +37,7 @@ point parabola_intersection2(point p1, point p2, double l, int lrd){
         d =0;
     double x_right = (-b+sqrt(d))/(2*a);
     double x_left = (-b-sqrt(d))/(2*a); 
-
     point ans;
-    // watch(x1);
-    // watch(y1);
-    // watch(x2);
-    // watch(y2);
-    // watch(a);
-    // watch(b);
-    // watch(c);
-    // watch(d);
-
     if(lrd == 0)
         ans.x = min(x_left, x_right);
     else if(lrd == 1)
@@ -74,21 +65,12 @@ double parabola_intersection(point p1, point p2, double l, int lrd){
     double x_right = (-b+sqrt(d))/(2*a);
     double x_left = (-b-sqrt(d))/(2*a); 
 
-    // watch(x1);
-    // watch(y1);
-    // watch(x2);
-    // watch(y2);
-    // watch(a);
-    // watch(b);
-    // watch(c);
-    // watch(d);
-
     if(lrd == 0)
         return min(x_left, x_right);
     else if(lrd == 1)
         return max(x_right, x_left);
     else{
-        cout<<"Error in parabola_intersection"<<endl;
+        //cout<<"Error in parabola_intersection"<<endl;
         return -1;
     }
 }
@@ -121,7 +103,7 @@ point compute_circumcentre(point p1, point p2, point p3){
     double x3 = p3.x;
     double y3 = p3.y;
 
-    cout<<x1<<" "<<y1<<" "<<x2<<" "<<y2<<" "<<x3<<" "<<y3<<endl;
+    //cout<<x1<<" "<<y1<<" "<<x2<<" "<<y2<<" "<<x3<<" "<<y3<<endl;
 
     double a1 = 2*(x2-x1);
     double b1 = 2*(y2-y1);
@@ -145,24 +127,45 @@ double compute_distance(point p1, point p2){
     return sqrt((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y));
 }
 
-void bound_edge(edge& e){
-    double bound = 1000;
-    if(e.start.x > bound)
-        e.start.x = bound;
-    if(e.start.x < -bound)
-        e.start.x = -bound;
-    if(e.start.y > bound)
-        e.start.y = bound;
-    if(e.start.y < -bound)
-        e.start.y = -bound;
-    if(e.end.x > bound)
-        e.end.x = bound;
-    if(e.end.x < -bound)
-        e.end.x = -bound;
-    if(e.end.y > bound)
-        e.end.y = bound;
-    if(e.end.y < -bound) 
-        e.end.y = -bound;
+point line_segment_intersection(point p1, point p2, point p3, point p4){
+    double x1 = p1.x;
+    double y1 = p1.y;
+    double x2 = p2.x;
+    double y2 = p2.y;
+    double x3 = p3.x;
+    double y3 = p3.y;
+    double x4 = p4.x;
+    double y4 = p4.y;
+
+    double m1 = (y2 - y1) / (x2 - x1);
+    double m2 = (y4 - y3) / (x4 - x3);
+    double c1 = y1 - m1 * x1;
+    double c2 = y3 - m2 * x3;
+
+    if (abs(m1 - m2) < 1e-6) {
+        return point{-1,-1,-1};
+    }
+
+    double x_intersect, y_intersect;
+    if (isinf(m1)) {
+        x_intersect = x1;
+        y_intersect = m2 * x_intersect + c2;
+    } else if (isinf(m2)) {
+        x_intersect = x3;
+        y_intersect = m1 * x_intersect + c1;
+    } else {
+        x_intersect = (c2 - c1) / (m1 - m2);
+        y_intersect = m1 * x_intersect + c1;
+    }
+
+    if ((min(x1, x2) <= x_intersect && x_intersect <= max(x1, x2)) &&
+        (min(y1, y2) <= y_intersect && y_intersect <= max(y1, y2)) &&
+        (min(x3, x4) <= x_intersect && x_intersect <= max(x3, x4)) &&
+        (min(y3, y4) <= y_intersect && y_intersect <= max(y3, y4))) {
+        return point{1,x_intersect, y_intersect};
+    } else {
+        return point{-1,-1, -1};
+    }
 }
 //p2 is ALWAYS the new point on the sweep line
 point compute_newHalfedge(point p1, point p2, double l){
@@ -202,9 +205,9 @@ void print_beach_line(){
     cout<<endl;
 }
 void delete_circle_events(breakpoint b1, breakpoint b2){
-    cout<<"Deleting circle events"<<endl;
-    cout<<"b1"<<" "<<b1.p1.index<<" "<<b1.p2.index<<" "<<b1.lrd<<endl;
-    cout<<"b2"<<" "<<b2.p1.index<<" "<<b2.p2.index<<" "<<b2.lrd<<endl;
+    // cout<<"Deleting circle events"<<endl;
+    // cout<<"b1"<<" "<<b1.p1.index<<" "<<b1.p2.index<<" "<<b1.lrd<<endl;
+    // cout<<"b2"<<" "<<b2.p1.index<<" "<<b2.p2.index<<" "<<b2.lrd<<endl;
     if(b1.p1.index == b2.p2.index)
         return;
     event_point to_be_deleted;
@@ -213,27 +216,27 @@ void delete_circle_events(breakpoint b1, breakpoint b2){
     to_be_deleted.c.b2 = b2;
     to_be_deleted.p = compute_circumcentre(b1.p1, b1.p2, b2.p2);
     to_be_deleted.p.y -= compute_distance(compute_circumcentre(b1.p1, b1.p2, b2.p2), b1.p1);
-    watch(to_be_deleted.p.x);
-    watch(to_be_deleted.p.y);
+    // watch(to_be_deleted.p.x);
+    // watch(to_be_deleted.p.y);
     if(to_be_deleted.p.y > sweep_line)
         return;
-    cout<<parabola_intersection(b1.p1, b1.p2, to_be_deleted.p.y, b1.lrd)<<" "<<parabola_intersection(b2.p1, b2.p2, to_be_deleted.p.y, b2.lrd)<<endl;
+    //cout<<parabola_intersection(b1.p1, b1.p2, to_be_deleted.p.y, b1.lrd)<<" "<<parabola_intersection(b2.p1, b2.p2, to_be_deleted.p.y, b2.lrd)<<endl;
     if(fabs(parabola_intersection(b1.p1, b1.p2, to_be_deleted.p.y, b1.lrd) - parabola_intersection(b2.p1, b2.p2, to_be_deleted.p.y, b2.lrd)) > 1e-6)
         return;
     
     auto it = events.find(to_be_deleted);
-    cout<<"to_be_deleted"<<" "<<to_be_deleted.p.x<<" "<<to_be_deleted.p.y<<endl;
-    cout<<"*it"<<" "<<(*it).p.x<<" "<<(*it).p.y<<endl;
+    // cout<<"to_be_deleted"<<" "<<to_be_deleted.p.x<<" "<<to_be_deleted.p.y<<endl;
+    // cout<<"*it"<<" "<<(*it).p.x<<" "<<(*it).p.y<<endl;
     events.erase(it);
     
 
-    cout<<"Circle event deleted"<<endl;
+    //cout<<"Circle event deleted"<<endl;
 }
 
 void add_circle_event(breakpoint b1, breakpoint b2){
-    cout<<"Adding circle event"<<endl;
-    cout<<"b1"<<" "<<b1.p1.index<<" "<<b1.p2.index<<" "<<b1.lrd<<endl;
-    cout<<"b2"<<" "<<b2.p1.index<<" "<<b2.p2.index<<" "<<b2.lrd<<endl;
+    // cout<<"Adding circle event"<<endl;
+    // cout<<"b1"<<" "<<b1.p1.index<<" "<<b1.p2.index<<" "<<b1.lrd<<endl;
+    // cout<<"b2"<<" "<<b2.p1.index<<" "<<b2.p2.index<<" "<<b2.lrd<<endl;
     event_point new_circle_event;
     new_circle_event.is_site = 0;
     new_circle_event.p = compute_circumcentre(b1.p1, b1.p2, b2.p2);
@@ -242,14 +245,14 @@ void add_circle_event(breakpoint b1, breakpoint b2){
     new_circle_event.c.b2 = b2;
     if(new_circle_event.p.y > sweep_line)
         return;
-    watch(new_circle_event.p.x);
-    watch(new_circle_event.p.y);
-    cout<<parabola_intersection(b1.p1, b1.p2, new_circle_event.p.y, b1.lrd)<<" "<<parabola_intersection(b2.p1, b2.p2, new_circle_event.p.y, b2.lrd)<<endl;
+    // watch(new_circle_event.p.x);
+    // watch(new_circle_event.p.y);
+    //cout<<parabola_intersection(b1.p1, b1.p2, new_circle_event.p.y, b1.lrd)<<" "<<parabola_intersection(b2.p1, b2.p2, new_circle_event.p.y, b2.lrd)<<endl;
     if(fabs(parabola_intersection(b1.p1, b1.p2, new_circle_event.p.y, b1.lrd) - parabola_intersection(b2.p1, b2.p2, new_circle_event.p.y, b2.lrd)) > 1e-6)
         return;
     
     events.insert(new_circle_event);
-    cout<<"Circle event added with points as x : "<<new_circle_event.p.x<<" y : "<<new_circle_event.p.y<<endl;
+    //cout<<"Circle event added with points as x : "<<new_circle_event.p.x<<" y : "<<new_circle_event.p.y<<endl;
 }
 
 void handle_site_event(point p){
@@ -292,18 +295,18 @@ void handle_site_event(point p){
 
         if(it!=beach_line.begin()){
             breakpoint prev = *(--it);
-            cout<<"starting delete "<<endl;
+            //cout<<"starting delete "<<endl;
             delete_circle_events(prev, next);
-            cout<<"starting to add circle eventss"<<endl;
+            //cout<<"starting to add circle eventss"<<endl;
             add_circle_event(prev, b1);
             add_circle_event(b2, next);
         }
         else
             add_circle_event(b2, next);
 
-        watch(parabola_intersection(b.p1,b.p2,sweep_line,b.lrd));
-        watch(parabola_intersection(b1.p1,b1.p2,sweep_line,b1.lrd));
-        watch(parabola_intersection(b2.p1,b2.p2,sweep_line,b2.lrd));
+        // watch(parabola_intersection(b.p1,b.p2,sweep_line,b.lrd));
+        // watch(parabola_intersection(b1.p1,b1.p2,sweep_line,b1.lrd));
+        // watch(parabola_intersection(b2.p1,b2.p2,sweep_line,b2.lrd));
         beach_line.insert(b1);
         beach_line.insert(b2);
     }
@@ -347,25 +350,16 @@ void handle_circle_event(event_point e){
         else
             it2--;
     }
-    cout<<"b1"<<" "<<b1.p1.index<<" "<<b1.p2.index<<" "<<b1.lrd<<endl;
-    cout<<"*it1 "<<(*it1).p1.index<<" "<<(*it1).p2.index<<" "<<(*it1).lrd<<endl;
-    cout<<"b2"<<" "<<b2.p1.index<<" "<<b2.p2.index<<" "<<b2.lrd<<endl;
-    cout<<"*it2 "<<(*it2).p1.index<<" "<<(*it2).p2.index<<" "<<(*it2).lrd<<endl;
-    //cout<<"b1"<<" "<<b1.p1.index<<" "<<b1.p2.index<<" "<<b1.lrd<<endl;
-    //cout<<"b2"<<" "<<b2.p1.index<<" "<<b2.p2.index<<" "<<b2.lrd<<endl;
-    // //p,q,r,s,t
-
     point q = b1.p1;
     point r = b1.p2;
     point s = b2.p2;
+    b1 = (*it1);
+    b2 = (*it2);
 
     breakpoint new_breakpoint;
 
     new_breakpoint.p1 = q;
     new_breakpoint.p2 = s;
-
-    watch(parabola_intersection(q,s,sweep_line,0));
-    watch(e.p.x);
 
     if(abs(parabola_intersection(q,s,sweep_line,0)  - e.p.x)< 1e-6)
         new_breakpoint.lrd = 0;
@@ -377,40 +371,33 @@ void handle_circle_event(event_point e){
         temp--;
         breakpoint b0 = *temp;
         point p = b0.p1;
-        cout<<"hi"<<endl;
-        // print_beach_line();
-        // cout << b0.p1.index << " " << b0.p2.index << " " << b0.lrd << endl;
-        // cout << b1.p1.index << " " << b1.p2.index << " " << b1.lrd << endl;
         delete_circle_events(b0, b1);
-        cout<<"hi2"<<endl;
         add_circle_event(b0, new_breakpoint);
     }
     auto temp = it2;
     temp++;
     auto temp2 = beach_line.end();
     if(temp!=(--temp2) && temp!=beach_line.end()){
-        print_beach_line();
+        //print_beach_line();
 
         breakpoint b3 = *temp;
         b2 = *it2;
-        cout<<"hi3"<<endl;
+        //cout<<"hi3"<<endl;
         
         delete_circle_events(b2, b3);
-        cout<<"hi4"<<endl;
+        //cout<<"hi4"<<endl;
         add_circle_event(new_breakpoint, b3);
     }
-    cout<<"hi5"<<endl;  
+    //cout<<"hi5"<<endl;  
     it1 = std::upper_bound(beach_line.begin(), beach_line.end(), b1, [](breakpoint a, breakpoint b) { return a < b; });
     
     while(true){
-        //cout<<(*it1).p1.index<<" "<<(*it1).p2.index<<" "<<(*it1).lrd<<endl;
         if(*it1 == b1)
             break;
         else
             it1--;
     }
     beach_line.erase(it1);
-    //cout<<"Reached here"<<endl;
     it2 = std::upper_bound(beach_line.begin(), beach_line.end(), b2, [](breakpoint a, breakpoint b) { return a < b; });
     while(true){
         if(*it2 == b2)
@@ -425,22 +412,11 @@ void handle_circle_event(event_point e){
     new_edge.end = compute_circumcentre(q,r,s);
     edges.push_back(new_edge);
     new_edge.start = b2.start;
-    edges.push_back(new_edge);
-
     new_breakpoint.start = new_edge.end;
+    edges.push_back(new_edge);
     beach_line.insert(new_breakpoint);
-    // cout<<"Testinnnnnnn\n";
-    // temp = beach_line.find(new_breakpoint);
-    // cout<<(*temp).p1.index<<" "<<(*temp).p2.index<<" "<<(*temp).lrd<<endl;
-    // temp2 = temp;
-    // --temp2;
-    // cout<<(*temp2).p1.index<<" "<<(*temp2).p2.index<<" "<<(*temp2).lrd<<endl;
-    // cout<<(*temp2 < *(temp))<<endl;
-    // watch(parabola_intersection((*temp).p1, (*temp).p2, sweep_line, (*temp).lrd));
-    // watch(parabola_intersection((*temp2).p1, (*temp2).p2, sweep_line, (*temp2).lrd));
-    // print_beach_line();
 }
-void bound(){
+void insert_missing_edges(){
     for(auto it = beach_line.begin(); it!=beach_line.end(); it++){
         breakpoint b = *it;
         point p;
@@ -456,7 +432,6 @@ int main(){
     cin>>n;
     point p;
     vector<point> input;
-
     for(int i=0;i<n; i++){double x,y;cin>>x>>y;
 	p.index = i+1;p.x = x;p.y = y; 
     input.push_back(p);
@@ -469,40 +444,17 @@ int main(){
         event_point e = *events.begin();
         events.erase(events.begin());   
         sweep_line = e.p.y + 1e-12;
-        // if(sweep_line == previous_sweep_line)
-        //     continue;
-        // previous_sweep_line = sweep_line;
-        watch(sweep_line);
-        if(e.is_site == 1){
+        if(e.is_site == 1)
             handle_site_event(e.p);
-            print_beach_line();
-        }
-        else{
-            cout<<"Handling circle event with sweep line value "<<sweep_line<<endl;
+        else
             handle_circle_event(e);
-            print_beach_line();
-        }
-
-        watch(events.size());
-        // cout<<"Printing events"<<endl;
-        // for(auto it = events.begin(); it!=events.end(); it++){
-        //     cout<<"*it"<<" "<<(*it).c.b1.p1.index<<" "<<(*it).c.b1.p2.index<<" "<<(*it).c.b1.lrd<<endl;
-        //     cout<<"*it"<<" "<<(*it).c.b2.p1.index<<" "<<(*it).c.b2.p2.index<<" "<<(*it).c.b2.lrd<<endl;
-        // }
     }
-    sweep_line -= 1000;
-
-    bound();
-
-    cout<<"OUTPUTTING"<<endl;
-    cout<<input.size()<<endl;
-    for(auto v : input){
-        cout<<v.x<<" "<<v.y<<endl;
-    }
-    cout<<edges.size()<<endl;
+    sweep_line -= 100;
+    insert_missing_edges();
+    for(auto v : input){cout<<v.x<<" "<<v.y<<endl;}
     for(auto e : edges){
-        bound_edge(e);
         cout<<e.start.x<<" "<<e.start.y<<" "<<e.end.x<<" "<<e.end.y<<endl; 
     }
+    cout<<edges.size()<<" "<<input.size(); 
     return 0;
 }
